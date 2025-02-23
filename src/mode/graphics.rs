@@ -16,11 +16,10 @@
 //! ```
 
 use display_interface::{DisplayError, WriteOnlyDataCommand};
-use hal::{blocking::delay::DelayMs, digital::v2::OutputPin};
+use hal::{delay::DelayNs, digital::OutputPin};
 
 use crate::{
-    displayrotation::DisplayRotation,
-    mode::displaymode::DisplayModeTrait,
+    displayrotation::DisplayRotation, mode::displaymode::DisplayModeTrait,
     properties::DisplayProperties,
 };
 
@@ -65,14 +64,10 @@ where
     /// Reset display. This is very important on the SSD1309!
     ///
     /// This should be called before `init` or any other methods.
-    pub fn reset<RST, DELAY, PinE>(
-        &mut self,
-        rst: &mut RST,
-        delay: &mut DELAY,
-    ) -> Result<(), PinE>
+    pub fn reset<RST, DELAY, PinE>(&mut self, rst: &mut RST, delay: &mut DELAY) -> Result<(), PinE>
     where
         RST: OutputPin<Error = PinE>,
-        DELAY: DelayMs<u8>,
+        DELAY: DelayNs,
     {
         rst.set_high()?;
         delay.delay_ms(10);
@@ -201,7 +196,8 @@ where
     {
         let bb = self.bounding_box();
 
-        pixels.into_iter()
+        pixels
+            .into_iter()
             .filter(|Pixel(pos, _color)| bb.contains(*pos))
             .for_each(|Pixel(pos, color)| {
                 self.set_pixel(pos.x as u32, pos.y as u32, color.is_on().into())
